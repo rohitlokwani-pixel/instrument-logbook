@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DCM Logbook">
+<title>DCM Shriram — Operator Logbook</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--navy:#0a1628;--blue:#1565c0;--gold:#f4a261;--green:#2d6a4f;--light:#f0f4ff;--border:#dde3ee;--text:#1a2340;--muted:#6b7a99;--alert:#e63946;--warn:#f4a261;--ok:#2d6a4f;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--light);color:var(--text);min-height:100vh;padding-bottom:80px}
+input,select,textarea,button{font-family:inherit}
+#login_screen{position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.login-logo{font-size:52px;margin-bottom:8px}
+.login-co{font-size:20px;font-weight:800;color:#fff;text-align:center}
+.login-dept{font-size:11px;color:rgba(255,255,255,.55);text-align:center;margin-bottom:8px}
+.admin-badge{background:#90caf9;color:#0d47a1;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:800;margin-bottom:20px}
+.login-card{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:340px;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.login-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px;text-align:center}
+.login-sub{font-size:11px;color:var(--muted);text-align:center;margin-bottom:16px}
+.login-inp{width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);font-size:15px;margin-bottom:12px;background:#fafbff}
+.login-inp:focus{outline:none;border-color:var(--blue)}
+.login-btn{width:100%;padding:13px;border-radius:10px;border:none;background:var(--navy);color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px}
+.login-err{color:var(--alert);font-size:12px;text-align:center;margin-bottom:8px;min-height:18px;font-weight:600}
+.login-att{font-size:11px;color:var(--muted);text-align:center}
+.live-dot{display:inline-block;width:7px;height:7px;background:#00c853;border-radius:50%;margin-right:3px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.header{background:#1565c0;color:#fff;padding:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.header-top{padding:10px 14px 6px;display:flex;justify-content:space-between;align-items:flex-start}
+.h-left .co{font-size:13px;font-weight:800}
+.h-left .dept{font-size:10px;color:rgba(255,255,255,.6);margin-top:1px}
+.h-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.r-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;background:#90caf9;color:#0d47a1}
+.sync-st{font-size:10px;color:rgba(255,255,255,.7)}
+.tabs{display:flex;border-top:1px solid rgba(255,255,255,.15)}
+.tab{flex:1;padding:9px 2px;font-size:10px;font-weight:500;color:rgba(255,255,255,.55);background:transparent;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:#fff;font-weight:700;border-bottom:2px solid #90caf9}
+.body{padding:12px}
+.card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:13px;margin-bottom:10px;box-shadow:0 1px 5px rgba(0,0,0,.05)}
+.ct{font-size:11px;font-weight:700;color:#1565c0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+label.lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;display:block}
+input[type=text],input[type=date],input[type=time],input[type=number],input[type=password],select,textarea{width:100%;padding:9px 11px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;margin-bottom:9px;background:#fafbff;color:var(--text);transition:border .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#1565c0;background:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row2 input,.row2 select{margin-bottom:0}
+.shift-btns{display:flex;gap:6px;margin-bottom:9px}
+.shift-btn{flex:1;padding:9px 2px;border-radius:8px;border:1.5px solid var(--border);background:#fafbff;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .2s;text-align:center}
+.shift-btn.active{background:#1565c0;color:#fff;border-color:#1565c0}
+.tw{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+.pt{width:100%;border-collapse:collapse;font-size:12px;min-width:320px}
+.pt th{background:#1565c0;color:#fff;padding:7px 4px;text-align:center;font-size:9px;font-weight:700;white-space:nowrap}
+.pt th:first-child{text-align:left;padding-left:8px}
+.pt td{padding:5px 3px;border-bottom:1px solid #eef0f7;text-align:center;vertical-align:middle}
+.pt td:first-child{text-align:left;padding-left:8px;font-weight:600;font-size:11px;white-space:nowrap}
+.pt tr:nth-child(even) td{background:#f8f9fc}
+.pt tr:last-child td{border-bottom:none}
+.ti{width:64px;padding:5px 3px;border-radius:6px;border:1.5px solid var(--border);font-size:12px;text-align:center;margin:0;background:#fff}
+.ti:focus{outline:none;border-color:#1565c0}
+.ti.hot{border-color:var(--alert);background:#fff5f5;color:var(--alert);font-weight:700}
+.ti.ok{border-color:#b7dfc9}
+.ri{width:80px;padding:5px 3px;border-radius:6px;border:1.5px solid var(--border);font-size:11px;text-align:center;margin:0;background:#fff}
+.ab{background:#fde8e8;border:1.5px solid #f5c6cb;border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start}
+.ab-text{font-size:12px;color:#721c24;font-weight:600;line-height:1.5}
+.btn-main{width:100%;padding:13px;border-radius:10px;border:none;background:#1565c0;color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .3s}
+.btn-main.saved{background:var(--ok)}
+.btn-main.loading{background:#546e7a;cursor:wait}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700}
+.b-ok{background:#d4edda;color:#155724}
+.b-alert{background:#fde8e8;color:#c0392b}
+.rc{background:#fff;border-radius:10px;border:1px solid var(--border);padding:11px;margin-bottom:9px}
+.rh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px}
+.rt{font-size:13px;font-weight:700;color:#1565c0}
+.rs{font-size:10px;color:var(--muted);margin-top:1px}
+.mt{width:100%;font-size:11px;border-collapse:collapse}
+.mt td{padding:3px 4px;border-bottom:1px solid #f0f2f8}
+.mt .k{color:var(--muted);font-weight:600;width:50%}
+.mt .v{color:var(--text)}
+.mt .v.hot{color:var(--alert);font-weight:700}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.sb{border-radius:10px;padding:12px;text-align:center}
+.sn{font-size:24px;font-weight:800}
+.sl{font-size:9px;font-weight:700;opacity:.8;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.bw{margin-bottom:7px}
+.bl{display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px}
+.bb{background:#eef0f7;border-radius:4px;height:7px;overflow:hidden}
+.bf{height:100%;border-radius:4px;transition:width .6s}
+.db{display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:9px;width:100%;text-align:left}
+.sr{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.sb2{border:1.5px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+.sl2{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.sn2{font-size:12px;font-weight:700;color:var(--text)}
+.empty{text-align:center;padding:36px 16px;color:var(--muted)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1565c0;color:#fff;padding:10px 22px;border-radius:24px;font-size:12px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.25);white-space:nowrap;display:none}
+.page{display:none}.page.active{display:block}
+.mr{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f0f2f8}
+.loading-overlay{position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:8888;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.2);border-top:4px solid #fff;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.info-box{background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:10px 12px;font-size:11px;color:#1565c0;line-height:1.6;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div id="login_screen">
+  <div class="login-logo">🏭</div>
+  <div class="login-co">DCM Shriram Limited</div>
+  <div class="login-dept">Instrumentation · Panel Temp Monitoring</div>
+  <div class="admin-badge">👷 ADMIN ACCESS ONLY</div>
+  <div class="login-card">
+    <div class="login-title">🔐 Admin Login</div>
+    <div class="login-sub">Admin password to continue</div>
+    <div class="login-err" id="login_err"></div>
+    <input class="login-inp" type="password" id="login_pass" placeholder="Operator password..." onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Login as Admin →</button>
+    <div class="login-att" id="login_att">3 attempts remaining</div>
+  </div>
+</div>
+<div class="loading-overlay" id="loading_overlay" style="display:none">
+  <div class="spinner"></div>
+  <div id="loading_msg" style="font-size:14px;font-weight:600">Connecting...</div>
+</div>
+<div id="main_app" style="display:none">
+<div class="header">
+  <div class="header-top">
+    <div class="h-left">
+      <div class="co">🏭 DCM Shriram — Logbook</div>
+      <div class="dept">Instrumentation · Panel Temp · Fertilizer</div>
+    </div>
+    <div class="h-right">
+      <span class="r-badge">👷 Operator</span>
+      <span class="sync-st"><span class="live-dot"></span>Live</span>
+      <span style="font-size:10px;color:rgba(255,255,255,.5)" id="live_time"></span>
+      <button onclick="doLogout()" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:10px;cursor:pointer;padding:0">Logout</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(0)">📋 Entry</button>
+    <button class="tab" onclick="switchTab(1)">📁 Records</button>
+    <button class="tab" onclick="switchTab(2)">📊 Analysis</button>
+    <button class="tab" onclick="switchTab(3)">⬇️ Download</button>
+  </div>
+</div>
+<div class="body">
+<div class="page active" id="page0">
+  <div id="alert_banners"></div>
+  <div class="card">
+    <div class="ct">🕐 Shift Details</div>
+    <label class="lbl">Select Shift</label>
+    <div class="shift-btns">
+      <button class="shift-btn active" onclick="selShift(this,'Morning')">☀️ Morning</button>
+      <button class="shift-btn" onclick="selShift(this,'Afternoon')">🌤 Afternoon</button>
+      <button class="shift-btn" onclick="selShift(this,'Night')">🌙 Night</button>
+    </div>
+    <div class="row2">
+      <div><label class="lbl">Date</label><input type="date" id="e_date"></div>
+      <div><label class="lbl">Time</label><input type="time" id="e_time" readonly style="background:#f0f2f8;color:#888"></div>
+    </div>
+    <label class="lbl">Recorded By</label>
+    <input type="text" id="e_op" placeholder="Your full name" style="margin-bottom:0" oninput="updSig()">
+  </div>
+  <div class="card" style="padding:13px 8px">
+    <div class="ct" style="padding:0 5px">🌡️ Panel Temperature Readings</div>
+    <div style="font-size:10px;color:var(--alert);margin-bottom:8px;font-weight:600;padding:0 5px">⚠️ Alert if temp ≥ 35°C</div>
+    <div class="tw"><table class="pt">
+      <thead><tr><th style="min-width:100px">Panel</th><th style="min-width:68px">Panel Temp °C</th><th style="min-width:82px">Cards Range °C</th><th style="min-width:68px">Hottest °C</th></tr></thead>
+      <tbody id="panel_tbody"></tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="ct">📝 Remarks</div>
+    <textarea id="e_rem" placeholder="Observations..." style="height:60px;margin-bottom:0"></textarea>
+  </div>
+  <div class="card">
+    <div class="ct">✍️ Signatures</div>
+    <div class="sr">
+      <div class="sb2"><div class="sl2">Recorded By</div><div class="sn2" id="sig_op">—</div></div>
+      <div class="sb2"><div class="sl2">Reviewed By</div><div class="sn2">Rohit Lokwani</div></div>
+    </div>
+  </div>
+  <button class="btn-main" id="submitBtn" onclick="submitEntry()">✅ Submit Entry</button>
+</div>
+<div class="page" id="page1">
+  <div class="card">
+    <div class="ct">🔍 Filter</div>
+    <label class="lbl">Month</label>
+    <select id="r_month" onchange="renderRecords()" style="margin-bottom:8px"></select>
+    <div class="row2">
+      <div><label class="lbl">Shift</label>
+        <select id="r_shift" onchange="renderRecords()" style="margin-bottom:0">
+          <option>All</option><option>Morning</option><option>Afternoon</option><option>Night</option>
+        </select>
+      </div>
+      <div><label class="lbl">Filter</label>
+        <select id="r_fil" onchange="renderRecords()" style="margin-bottom:0">
+          <option value="all">All</option><option value="alert">🔴 Alerts</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div id="rec_count" style="font-size:11px;color:var(--muted)"></div>
+    <button onclick="loadData()" style="font-size:11px;background:#e3f2fd;border:none;padding:5px 10px;border-radius:6px;color:#1565c0;font-weight:600;cursor:pointer">🔄 Refresh</button>
+  </div>
+  <div id="records_list"></div>
+</div>
+<div class="page" id="page2">
+  <div class="card">
+    <div class="ct">📅 Period</div>
+    <select id="a_month" onchange="renderAnalysis()" style="margin-bottom:0"></select>
+  </div>
+  <div id="analysis_content"></div>
+</div>
+<div class="page" id="page3">
+  <div class="card">
+    <div class="ct">📅 Month</div>
+    <select id="d_month" onchange="updDl()" style="margin-bottom:6px"></select>
+    <div id="dl_count" style="font-size:12px;color:var(--muted);text-align:center"></div>
+  </div>
+  <button class="db" style="background:#1565c0" onclick="downloadPDF()"><span style="font-size:24px">📄</span><div><div>Download PDF</div><div style="font-size:10px;opacity:.75;font-weight:400">Print-ready report</div></div></button>
+  <button class="db" style="background:#1b5e20" onclick="downloadCSV()"><span style="font-size:24px">📊</span><div><div>Download Excel/CSV</div><div style="font-size:10px;opacity:.75;font-weight:400">Open in Excel</div></div></button>
+  <div class="card" id="all_months_card"></div>
+</div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+const OP_PASS = "DCM@2026"; // Admin password
+const ALERT_LIMIT = 35;
+const EMAILJS_SERVICE = "service_9z8hiyp";
+const EMAILJS_TEMPLATE = "template_s8mnjwl";
+const EMAILJS_PUBLIC_KEY = "QE5QcBNYvTZBOWI-f";
+const ALERT_EMAIL = "rohitlokwani@dcmshriram.com";
+
+// ── JSONBIN CONFIG ─────────────────────────────────────────────────────────
+// Using X-Access-Key format to avoid $ sign issues
+const JB_KEY = ["$2a$10$WnZ9br5yKrrVQrkV14bqi", "0xTJSqYl6GzQGclbphlyXuCZPR5UIzxu"].join("");
+const JB_URL = "https://api.jsonbin.io/v3/b";
+
+const PANELS=[
+  {id:"SC1",name:"SC - 1",hasCards:true},{id:"SC2",name:"SC - 2",hasCards:true},
+  {id:"SC3",name:"SC - 3",hasCards:true},{id:"SC01U",name:"SC - 01U",hasCards:true},
+  {id:"SC02U",name:"SC - 02U",hasCards:true},{id:"PDB",name:"PDB",hasCards:false},
+  {id:"UPSAB",name:"UPSACDB",hasCards:false},{id:"UPS1",name:"UPS - 1",hasCards:false},
+  {id:"UPS2",name:"UPS - 2",hasCards:false},{id:"SVR",name:"Server Panel",hasCards:false},
+  {id:"VMS",name:"VMS Sinkawa",hasCards:false},{id:"EWS",name:"EWS",hasCards:false},
+  {id:"AMAWS",name:"Ammonia AWS",hasCards:false},{id:"URAWS",name:"Urea AWS",hasCards:false},
+  {id:"CLV",name:"Clear View",hasCards:false},{id:"ROOM",name:"Room Temp",hasCards:false},
+  {id:"ACRUN",name:"No of AC Running",hasCards:false,isText:true},
+  {id:"DUCT",name:"No of Duct ACs",hasCards:false,isText:true},
+  {id:"TOWAC",name:"No of Tower AC",hasCards:false,isText:true},
+];
+
+let allData={};let binId=null;let selShiftVal="Morning";let loginAtt=3;let isOnline=false;
+
+// ── STORAGE KEY ─────────────────────────────────────────────────────────────
+const STORE_KEY="dcm_shared_logbook_v1";
+function saveLocal(){try{localStorage.setItem(STORE_KEY,JSON.stringify({binId,allData}));}catch{}}
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");binId=d.binId||null;allData=d.allData||{};}catch{}}
+
+// ── JSONBIN API ─────────────────────────────────────────────────────────────
+async function jbFetch(url,opts={}){
+  const headers={"Content-Type":"application/json","X-Master-Key":JB_KEY,...(opts.headers||{})};
+  const r=await fetch(url,{...opts,headers});
+  return r;
+}
+
+async function findBin(){
+  try{
+    const r=await jbFetch(`${JB_URL}?sortBy=createdAt&sortOrder=desc`);
+    if(!r.ok)return null;
+    const j=await r.json();
+    if(Array.isArray(j)){const ex=j.find(b=>b.record?.appName==="DCM_Shriram_v3");if(ex)return ex.id;}
+    return null;
+  }catch{return null;}
+}
+
+async function createBin(){
+  try{
+    const r=await jbFetch(JB_URL,{method:"POST",headers:{"X-Bin-Name":"DCM_Shriram_v3","X-Bin-Private":"true"},body:JSON.stringify({appName:"DCM_Shriram_v3",entries:{},created:new Date().toISOString()})});
+    if(!r.ok)return null;
+    const j=await r.json();return j.metadata?.id||null;
+  }catch{return null;}
+}
+
+async function readBin(){
+  if(!binId)return null;
+  try{const r=await jbFetch(`${JB_URL}/${binId}/latest`);if(!r.ok)return null;const j=await r.json();return j.record||null;}
+  catch{return null;}
+}
+
+async function writeBin(){
+  if(!binId)return false;
+  try{const r=await jbFetch(`${JB_URL}/${binId}`,{method:"PUT",body:JSON.stringify({appName:"DCM_Shriram_v3",entries:allData,updated:new Date().toISOString()})});return r.ok;}
+  catch{return false;}
+}
+
+async function loadData(){
+  showLoad("Loading live data...");
+  try{
+    if(!binId){
+      binId=await findBin();
+      if(!binId)binId=await createBin();
+    }
+    if(binId){
+      const d=await readBin();
+      if(d){allData=d.entries||{};isOnline=true;}
+      saveLocal();
+    }
+    hideLoad();populateSels();renderRecords();
+    if(isOnline)showToast("✅ Live data loaded!");
+    else showToast("⚠️ Working offline");
+  }catch{hideLoad();showToast("⚠️ Offline mode");}
+}
+
+// ── UTILS ───────────────────────────────────────────────────────────────────
+function showToast(m,d=2500){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(t._t);t._t=setTimeout(()=>t.style.display="none",d);}
+function showLoad(m){document.getElementById("loading_msg").textContent=m||"Loading...";document.getElementById("loading_overlay").style.display="flex";}
+function hideLoad(){document.getElementById("loading_overlay").style.display="none";}
+function updateClock(){const d=new Date();const el=document.getElementById("live_time");if(el)el.textContent=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});const et=document.getElementById("e_time");if(et)et.value=d.toTimeString().slice(0,5);}
+setInterval(updateClock,1000);updateClock();
+
+// ── LOGIN ───────────────────────────────────────────────────────────────────
+async function doLogin(){
+  const pass=document.getElementById("login_pass").value;
+  const err=document.getElementById("login_err");const att=document.getElementById("login_att");
+  if(pass===OP_PASS){
+    loadLocal();
+    document.getElementById("login_screen").style.display="none";
+    document.getElementById("main_app").style.display="block";
+    document.getElementById("e_date").value=new Date().toISOString().slice(0,10);
+    buildTable();
+    await loadData();
+    setInterval(loadData,3*60*1000);
+  } else {
+    loginAtt--;err.textContent="❌ Wrong password!";att.textContent=`${loginAtt} attempt${loginAtt!==1?"s":""} remaining`;
+    document.getElementById("login_pass").value="";
+    if(loginAtt<=0){err.textContent="🔒 Locked 5 min!";document.querySelector(".login-btn").disabled=true;document.getElementById("login_pass").disabled=true;
+    setTimeout(()=>{loginAtt=3;document.querySelector(".login-btn").disabled=false;document.getElementById("login_pass").disabled=false;err.textContent="";att.textContent="3 attempts remaining";},5*60*1000);}
+  }
+}
+function doLogout(){document.getElementById("main_app").style.display="none";document.getElementById("login_screen").style.display="flex";document.getElementById("login_pass").value="";}
+function updSig(){document.getElementById("sig_op").textContent=document.getElementById("e_op").value.trim()||"—";}
+function selShift(btn,s){document.querySelectorAll(".shift-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");selShiftVal=s;}
+
+// ── TABLE ───────────────────────────────────────────────────────────────────
+function buildTable(){
+  const tb=document.getElementById("panel_tbody");tb.innerHTML="";
+  PANELS.forEach(p=>{
+    const tr=document.createElement("tr");
+    if(p.isText){tr.innerHTML=`<td>${p.name}</td><td colspan="3"><input class="ti" style="width:95%" type="text" id="v_${p.id}" placeholder="Enter..."></td>`;}
+    else{tr.innerHTML=`<td>${p.name}</td><td><input class="ti" type="number" step="0.1" id="v_${p.id}" placeholder="—" oninput="chkT(this)"></td><td>${p.hasCards?`<input class="ri" type="text" id="rng_${p.id}" placeholder="e.g.28-34">`:""}</td><td>${p.hasCards?`<input class="ti" type="number" step="0.1" id="hot_${p.id}" placeholder="—" oninput="chkT(this)">`:""}</td>`;}
+    tb.appendChild(tr);
+  });
+}
+function chkT(inp){const v=parseFloat(inp.value);inp.classList.remove("hot","ok");if(!isNaN(v)){v>=ALERT_LIMIT?inp.classList.add("hot"):inp.classList.add("ok");}updAB();}
+function updAB(){
+  const al=[];
+  PANELS.forEach(p=>{if(p.isText)return;const v=parseFloat(document.getElementById("v_"+p.id)?.value);if(!isNaN(v)&&v>=ALERT_LIMIT)al.push(`${p.name}: ${v}°C`);if(p.hasCards){const hv=parseFloat(document.getElementById("hot_"+p.id)?.value);if(!isNaN(hv)&&hv>=ALERT_LIMIT)al.push(`${p.name} Card: ${hv}°C`);}});
+  document.getElementById("alert_banners").innerHTML=al.length?`<div class="ab"><span style="font-size:20px">🚨</span><div class="ab-text">ALERT! Exceeded ${ALERT_LIMIT}°C:<br>${al.join(" · ")}</div></div>`:"";
+}
+
+// ── SUBMIT ──────────────────────────────────────────────────────────────────
+async function submitEntry(){
+  const op=document.getElementById("e_op").value.trim();if(!op){showToast("⚠️ Enter your name");return;}
+  const date=document.getElementById("e_date").value;if(!date){showToast("⚠️ Select date");return;}
+  const readings={};let hasData=false;
+  PANELS.forEach(p=>{const v=document.getElementById("v_"+p.id)?.value||"";readings[p.id]={panelTemp:v};if(v)hasData=true;if(p.hasCards){readings[p.id].range=document.getElementById("rng_"+p.id)?.value||"";readings[p.id].hottest=document.getElementById("hot_"+p.id)?.value||"";}});
+  if(!hasData){showToast("⚠️ Enter at least one reading");return;}
+  const ap=[];PANELS.forEach(p=>{if(p.isText)return;const v=parseFloat(readings[p.id]?.panelTemp);if(!isNaN(v)&&v>=ALERT_LIMIT)ap.push(`${p.name}: ${v}°C`);});
+  const entry={id:Date.now(),date,time:document.getElementById("e_time").value,shift:selShiftVal,operator:op,readings,remarks:document.getElementById("e_rem").value,reviewedBy:"Rohit Lokwani",hasAlert:ap.length>0,alertPanels:ap};
+  const month=date.slice(0,7);if(!allData[month])allData[month]=[];allData[month].unshift(entry);
+  const btn=document.getElementById("submitBtn");btn.textContent="⏳ Saving...";btn.classList.add("loading");
+  const ok=await writeBin();
+  saveLocal();
+  btn.textContent=ok?"✅ Saved to Cloud!":"✅ Saved Locally";btn.classList.remove("loading");btn.classList.add("saved");
+  showToast(ap.length?`✅ Saved! 🚨 ${ap.length} panel(s) over ${ALERT_LIMIT}°C!`:ok?"✅ Saved to cloud! ☁️":"✅ Saved locally",3000);
+  if(ap.length>0)sendEmailAlert(ap,entry);
+  setTimeout(()=>{
+    btn.textContent="✅ Submit Entry";btn.classList.remove("saved");
+    PANELS.forEach(p=>{const el=document.getElementById("v_"+p.id);if(el){el.value="";el.classList.remove("hot","ok");}if(p.hasCards){const r=document.getElementById("rng_"+p.id);const h=document.getElementById("hot_"+p.id);if(r)r.value="";if(h){h.value="";h.classList.remove("hot","ok");}}});
+    document.getElementById("e_rem").value="";document.getElementById("e_op").value="";
+    document.getElementById("sig_op").textContent="—";document.getElementById("alert_banners").innerHTML="";
+    document.getElementById("e_date").value=new Date().toISOString().slice(0,10);
+  },2000);
+}
+
+// ── EMAIL ───────────────────────────────────────────────────────────────────
+async function sendEmailAlert(alertPanels,entry){
+  try{
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+    const panelList=alertPanels.join(", ");
+    const msgBody=`TEMPERATURE ALERT - Fertilizer Plant!\n\nPanel: ${panelList}\nDate: ${entry.date}\nTime: ${entry.time}\nShift: ${entry.shift}\nOperator: ${entry.operator}\n\nPlease take immediate action!\n\nDCM Shriram Daily Log Book\nInstrumentation Department`;
+    await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{name:"DCM Shriram Logbook",time:entry.date+" "+entry.time,message:msgBody,email:ALERT_EMAIL,to_name:"Rohit Lokwani",subject:"Temperature Alert Control Room",reply_to:ALERT_EMAIL});
+    showToast("📧 Alert email sent to Rohit!",3000);
+  }catch(e){console.error("Email failed:",e);}
+}
+
+// ── RECORDS ─────────────────────────────────────────────────────────────────
+function allMonths(){return[...new Set(Object.keys(allData))].sort().reverse();}
+function populateSels(){
+  const months=allMonths();const now=new Date().toISOString().slice(0,7);
+  ["r_month","a_month","d_month"].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value||now;sel.innerHTML="";
+    if(!months.length){sel.innerHTML=`<option value="${now}">${now}</option>`;return;}
+    months.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m;sel.appendChild(o);});
+    sel.value=months.includes(cur)?cur:months[0];
+  });
+}
+function renderRecords(){
+  const month=document.getElementById("r_month").value;
+  const shift=document.getElementById("r_shift").value;
+  const alertOnly=document.getElementById("r_fil").value==="alert";
+  let recs=(allData[month]||[]).filter(r=>{if(shift!=="All"&&r.shift!==shift)return false;if(alertOnly&&!r.hasAlert)return false;return true;});
+  document.getElementById("rec_count").textContent=`${recs.length} entries`;
+  const el=document.getElementById("records_list");
+  if(!recs.length){el.innerHTML=`<div class="empty"><div style="font-size:36px">📋</div><div style="margin-top:8px">No entries yet</div><div style="font-size:12px;margin-top:4px;color:#9e9e9e">Fill entry in Entry tab</div></div>`;return;}
+  el.innerHTML=recs.map(r=>{
+    const icon=r.shift==="Morning"?"☀️":r.shift==="Afternoon"?"🌤":"🌙";
+    const rows=PANELS.slice(0,16).map(p=>{const v=r.readings[p.id]?.panelTemp||"—";const hot=!p.isText&&parseFloat(v)>=ALERT_LIMIT;return`<tr><td class="k">${p.name}</td><td class="v ${hot?"hot":""}">${v}${!p.isText&&v!=="—"?"°C":""}${p.hasCards&&r.readings[p.id]?.hottest?` | 🔥${r.readings[p.id].hottest}°C`:""}</td></tr>`;}).join("");
+    return`<div class="rc"><div class="rh"><div><div class="rt">${icon} ${r.shift}</div><div class="rs">${r.date} · ${r.time} · ${r.operator}</div></div><span class="badge ${r.hasAlert?"b-alert":"b-ok"}">${r.hasAlert?"🚨 Alert":"✅ OK"}</span></div>
+    ${r.hasAlert?`<div style="font-size:10px;color:var(--alert);background:#fff5f5;border-radius:6px;padding:5px 8px;margin-bottom:7px;font-weight:600">🚨 ${(r.alertPanels||[]).join(" · ")}</div>`:""}
+    <table class="mt">${rows}</table>
+    ${r.remarks?`<div style="font-size:11px;color:var(--muted);margin-top:5px;padding-top:5px;border-top:1px solid #eef0f7">📝 ${r.remarks}</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+// ── ANALYSIS ────────────────────────────────────────────────────────────────
+function renderAnalysis(){
+  const month=document.getElementById("a_month").value;const recs=allData[month]||[];
+  const el=document.getElementById("analysis_content");
+  if(!recs.length){el.innerHTML=`<div class="empty"><div style="font-size:36px">📊</div><div style="margin-top:8px">No data</div></div>`;return;}
+  const total=recs.length;const alertCnt=recs.filter(r=>r.hasAlert).length;
+  const shifts={Morning:0,Afternoon:0,Night:0};recs.forEach(r=>{if(shifts[r.shift]!==undefined)shifts[r.shift]++;});
+  const ps={};PANELS.slice(0,16).forEach(p=>{if(p.isText)return;const vals=recs.map(r=>parseFloat(r.readings[p.id]?.panelTemp)).filter(v=>!isNaN(v));if(!vals.length)return;ps[p.id]={name:p.name,min:Math.min(...vals).toFixed(1),max:Math.max(...vals).toFixed(1),avg:(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1),alerts:vals.filter(v=>v>=ALERT_LIMIT).length};});
+  const maxAvg=Math.max(...Object.values(ps).map(s=>parseFloat(s.avg)),1);
+  el.innerHTML=`<div class="sg">
+    <div class="sb" style="background:#e3f2fd"><div class="sn" style="color:#1565c0">${total}</div><div class="sl" style="color:#1565c0">Total</div></div>
+    <div class="sb" style="background:${alertCnt?"#fde8e8":"#d4edda"}"><div class="sn" style="color:${alertCnt?"#c0392b":"#155724"}">${alertCnt}</div><div class="sl" style="color:${alertCnt?"#c0392b":"#155724"}">Alerts</div></div>
+    <div class="sb" style="background:#fff8e1"><div class="sn" style="color:#f57f17">${shifts.Morning}</div><div class="sl" style="color:#f57f17">☀️ Morning</div></div>
+    <div class="sb" style="background:#e8f5e9"><div class="sn" style="color:#2d6a4f">${shifts.Afternoon+shifts.Night}</div><div class="sl" style="color:#2d6a4f">🌤🌙 Aft+Night</div></div>
+  </div>
+  <div class="card"><div class="ct">🌡️ Panel Stats</div>
+  <div style="display:grid;grid-template-columns:1fr auto auto auto auto;font-size:10px;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:4px">
+    <span style="font-weight:700;color:var(--muted)">Panel</span><span style="font-weight:700;color:#2d6a4f;text-align:center;padding:0 5px">Min</span><span style="font-weight:700;color:#1565c0;text-align:center;padding:0 5px">Avg</span><span style="font-weight:700;color:var(--alert);text-align:center;padding:0 5px">Max</span><span style="font-weight:700;color:var(--muted);text-align:center;padding:0 3px">🚨</span>
+  </div>
+  ${Object.values(ps).map(s=>{const hot=parseFloat(s.max)>=ALERT_LIMIT;return`<div style="display:grid;grid-template-columns:1fr auto auto auto auto;border-bottom:1px solid #f0f2f8;align-items:center;padding:4px 0"><span style="font-size:11px;font-weight:600">${s.name}</span><span style="font-size:11px;color:#2d6a4f;font-weight:600;text-align:center;padding:0 5px">${s.min}</span><span style="font-size:11px;color:#1565c0;font-weight:700;text-align:center;padding:0 5px">${s.avg}</span><span style="font-size:11px;color:${hot?"var(--alert)":"var(--text)"};font-weight:${hot?700:500};text-align:center;padding:0 5px">${s.max}</span><span style="font-size:11px;color:${s.alerts?"var(--alert)":"#ccc"};font-weight:700;text-align:center;padding:0 3px">${s.alerts||"—"}</span></div>`;}).join("")}
+  </div>
+  <div class="card"><div class="ct">📈 Avg Temp Chart</div>
+  ${Object.values(ps).map(s=>{const pct=Math.round((parseFloat(s.avg)/maxAvg)*100);const color=parseFloat(s.avg)>=ALERT_LIMIT?"var(--alert)":parseFloat(s.avg)>=30?"var(--warn)":"var(--ok)";return`<div class="bw"><div class="bl"><span>${s.name}</span><span style="color:${color};font-weight:600">${s.avg}°C</span></div><div class="bb"><div class="bf" style="width:${pct}%;background:${color}"></div></div></div>`;}).join("")}
+  <div style="display:flex;gap:10px;margin-top:8px;font-size:10px;color:var(--muted)"><span>🟢 Normal</span><span>🟡 ≥30°C</span><span>🔴 ≥${ALERT_LIMIT}°C</span></div></div>
+  ${alertCnt?`<div class="ab"><span style="font-size:20px">🚨</span><div class="ab-text">${alertCnt} of ${total} entries exceeded ${ALERT_LIMIT}°C!</div></div>`:""}`;
+}
+
+// ── DOWNLOAD ────────────────────────────────────────────────────────────────
+function updDl(){
+  const m=document.getElementById("d_month").value;
+  document.getElementById("dl_count").textContent=`${(allData[m]||[]).length} entries · ${m}`;
+  const months=allMonths();
+  document.getElementById("all_months_card").innerHTML=`<div class="ct">🗄️ All Data</div>`+(months.length?months.map(m=>{const cnt=(allData[m]||[]).length;const al=(allData[m]||[]).filter(r=>r.hasAlert).length;return`<div class="mr"><span style="font-size:12px;font-weight:700;color:#1565c0">${m}</span><div style="display:flex;gap:6px;align-items:center">${al?`<span class="badge b-alert">🚨${al}</span>`:""}<span style="font-size:11px;color:var(--muted)">${cnt} entries</span></div></div>`;}).join(""):`<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px">No data</div>`);
+}
+function downloadCSV(){
+  const m=document.getElementById("d_month").value;const recs=allData[m]||[];
+  if(!recs.length){showToast("No data");return;}
+  const hdrs=["Date","Time","Shift","Operator","Reviewed By",...PANELS.map(p=>p.name),...PANELS.filter(p=>p.hasCards).map(p=>p.name+" Range"),...PANELS.filter(p=>p.hasCards).map(p=>p.name+" Hottest"),"Alert","Alert Panels","Remarks"];
+  const rows=recs.map(r=>[r.date,r.time,r.shift,r.operator,r.reviewedBy||"Rohit Lokwani",...PANELS.map(p=>r.readings[p.id]?.panelTemp||""),...PANELS.filter(p=>p.hasCards).map(p=>r.readings[p.id]?.range||""),...PANELS.filter(p=>p.hasCards).map(p=>r.readings[p.id]?.hottest||""),r.hasAlert?"YES":"NO",(r.alertPanels||[]).join("; "),r.remarks||""].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(","));
+  const csv=[hdrs.join(","),...rows].join("\n");
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`DCM_Logbook_${m}.csv`;a.click();URL.revokeObjectURL(url);showToast("📊 Downloaded!");
+}
+function downloadPDF(){
+  const m=document.getElementById("d_month").value;const recs=allData[m]||[];
+  if(!recs.length){showToast("No data");return;}
+  const ph=PANELS.slice(0,16).map(p=>`<th>${p.name}</th>`).join("");
+  const rows=recs.map(r=>{const icon=r.shift==="Morning"?"☀️":r.shift==="Afternoon"?"🌤":"🌙";const cells=PANELS.slice(0,16).map(p=>{const v=r.readings[p.id]?.panelTemp||"—";const hot=!p.isText&&parseFloat(v)>=ALERT_LIMIT;return`<td style="${hot?"color:#c0392b;font-weight:700;background:#fde8e8":""}">${v}${!p.isText&&v!=="—"?"°C":""}${p.hasCards&&r.readings[p.id]?.hottest?`<br><small>Hot:${r.readings[p.id].hottest}°C</small>`:""}</td>`;}).join("");return`<tr style="${r.hasAlert?"background:#fff9f9":""}"><td>${r.date}</td><td>${r.time}</td><td>${icon}${r.shift}</td><td>${r.operator}</td>${cells}<td style="${r.hasAlert?"color:#c0392b;font-weight:700":""}">${r.hasAlert?"🚨":"✅"}</td></tr>`;}).join("");
+  const win=window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html><head><title>DCM Logbook ${m}</title><style>body{font-family:Arial,sans-serif;font-size:9px;margin:12px}.hdr{border:2px solid #1565c0;padding:8px;margin-bottom:10px;text-align:center}.co{font-size:15px;font-weight:800;color:#1565c0}.dep{font-size:11px;color:#444;margin:2px 0}.meta{display:flex;justify-content:space-between;font-size:10px;margin-top:4px}table{width:100%;border-collapse:collapse;margin-bottom:10px}th{background:#1565c0;color:#fff;padding:4px 3px;font-size:8px;white-space:nowrap}td{padding:3px;border:1px solid #dde3ee;text-align:center;font-size:8px}tr:nth-child(even) td{background:#f8f9fc}.footer{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:40px}.sig{border-top:1px solid #000;padding-top:4px;text-align:center;font-size:10px}@media print{body{margin:6px}}</style></head><body>
+  <div class="hdr"><div class="co">DCM Shriram Limited</div><div class="dep">Instrumentation Dept — Panel Temp Monitoring — Fertilizer</div><div class="meta"><span>Month: ${m} | Entries: ${recs.length} | Limit: ${ALERT_LIMIT}°C</span><span>${new Date().toLocaleString()}</span></div></div>
+  <table><thead><tr><th>Date</th><th>Time</th><th>Shift</th><th>Operator</th>${ph}<th>Status</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="footer"><div class="sig"><div style="height:24px"></div>Recorded By</div><div class="sig"><div style="height:24px"></div>Reviewed By: Rohit Lokwani</div></div>
+  <script>window.onload=function(){window.print()}<\/script></body></html>`);
+  win.document.close();showToast("📄 PDF opening...");
+}
+function switchTab(i){
+  document.querySelectorAll(".tab").forEach((t,idx)=>t.classList.toggle("active",idx===i));
+  document.querySelectorAll(".page").forEach((p,idx)=>p.classList.toggle("active",idx===i));
+  if(i===1){populateSels();renderRecords();}if(i===2){populateSels();renderAnalysis();}if(i===3){populateSels();updDl();}
+}
+</script>
+</body>
+</html>
